@@ -1,6 +1,6 @@
 let store = {};
 
-module.export = store;
+module.exports = store;
 
 // TODO Schema
 // name: String,
