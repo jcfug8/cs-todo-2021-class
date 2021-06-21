@@ -6,8 +6,24 @@ const app = express();
 // define a port
 const portNumber = process.argv[2] || 8080;
 
-// tell our app to use json
+// tell our app to use json (this is an example of a middleware but this one
+// is implemented for us)
 app.use(express.json({}));
+
+// this is where we will do our own middleware
+app.use((req, res, next) => {
+  console.log(
+    "Time: ",
+    Date.now(),
+    " - Method: ",
+    req.method,
+    " - Path: ",
+    req.originalUrl,
+    " - Body: ",
+    req.body
+  );
+  next();
+});
 
 // Get - gets all of the todos (does not have a URL param)
 app.get("/todo", (req, res) => {
