@@ -2,7 +2,7 @@
 
 const mongoose = require("mongoose");
 
-function connect() {
+function connect(callback) {
   let connectionString = `mongodb+srv://todo_2021:mycoolpassword@cluster0.jdtxt.mongodb.net/todo_2021?retryWrites=true&w=majority`;
 
   console.log("connect to db....");
@@ -15,13 +15,10 @@ function connect() {
     .catch((err) => {
       console.log("There was an error connecting to mongo: ", err);
     });
-}
 
-function onConnect(callback) {
   mongoose.connection.once("open", callback);
 }
 
 module.exports = {
   connect,
-  onConnect,
 };

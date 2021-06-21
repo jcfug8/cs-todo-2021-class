@@ -5,12 +5,10 @@ const persist = require("./persist");
 // define a port
 const portNumber = process.argv[2] || 8080;
 
-persist.onConnect(function () {
+// connect to the database
+persist.connect(function () {
   // start the server
   server.listen(portNumber, () => {
     console.log(`Running Server on Port ${portNumber}`);
   });
 });
-
-// connect to the database
-persist.connect();
