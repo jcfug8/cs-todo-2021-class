@@ -29,11 +29,17 @@ app.use((req, res, next) => {
 // Get - gets all of the todos (does not have a URL param)
 app.get("/todo", (req, res) => {
   res.setHeader("Content-Type", "application/json");
+  let findQuery = {};
+
+  console.log(req.query);
+  if (req.query.name !== null && req.query.name !== undefined) {
+    findQuery.name = req.query.name;
+  }
 
   console.log("getting all todos");
   // return all of the todos in the store
 
-  Todo.find({}, function (err, todos) {
+  Todo.find(findQuery, function (err, todos) {
     // check if there was an error
     if (err) {
       console.log(`there was an error listing todos`, err);
@@ -62,17 +68,16 @@ app.get("/todo/:id", function (req, res) {
         message: `unable to find todo with id ${req.params.id}`,
         error: err,
       });
-      return;
     } else if (todo === null) {
       console.log(`unable to find todo with id ${req.params.id}`);
       res.status(404).json({
         message: `todo with id ${req.params.id} not found`,
         error: err,
       });
+    } else {
+      // success!!!! return the todo
+      res.status(200).json(todo);
     }
-
-    // success!!!! return the todo
-    res.status(200).json(todo);
   });
 });
 
@@ -82,32 +87,6 @@ let nextID = 0;
 app.post("/todo", function (req, res) {
   res.setHeader("Content-Type", "application/json");
   console.log(`creating a todo with body`, req.body);
-
-  if (
-    req.body.name === null ||
-    req.body.name === undefined ||
-    req.body.name === ""
-  ) {
-    console.log(`name empty when creating todo`);
-    res.status(400).json({
-      message: "unable to create todo",
-      error: "name empty when creating todo",
-    });
-    return;
-  }
-
-  if (
-    req.body.description === null ||
-    req.body.description === undefined ||
-    req.body.description === ""
-  ) {
-    console.log(`description empty when creating todo`);
-    res.status(400).json({
-      message: "unable to create todo",
-      error: "description empty when creating todo",
-    });
-    return;
-  }
 
   let creatingTodo = {
     name: req.body.name || "",
@@ -135,83 +114,108 @@ app.post("/todo", function (req, res) {
 app.delete("/todo/:id", function (req, res) {
   res.setHeader("Content-Type", "application/json");
   console.log(`deleting todo with id: ${req.params.id}`);
-  if (store[req.params.id] === undefined) {
-    // if it doesn't, send back and error
-    res.status(404).send(
-      JSON.stringify({
-        error: "not found",
-      })
-    );
-    return;
-  }
-  // success
-  // save the to-be delete todo in a var so we can return it
-  let todo = store[req.params.id];
-  // delete the todo
-  delete store[req.params.id];
-  // return the deleted todo
-  res.send(JSON.stringify(todo));
+
+  Todo.findByIdAndDelete(req.params.id, function (err, todo) {
+    if (err) {
+      console.log(`unable to delete todo`);
+      res.status(500).json({
+        message: "unable to delete todo",
+        error: err,
+      });
+      return;
+    } else if (todo === null) {
+      console.log(`unable to delete todo with id ${req.params.id}`);
+      res.status(404).json({
+        message: `todo with id ${req.params.id} not found`,
+        error: err,
+      });
+    } else {
+      res.status(200).json(todo);
+    }
+  });
 });
 
 // Patch - updates the todo with the given id
 app.patch("/todo/:id", function (req, res) {
   console.log(`updating todo with id: ${req.params.id} with body`, req.body);
 
-  if (store[req.params.id] === undefined) {
-    // if it doesn't, send back and error
-    res.status(404).send(
-      JSON.stringify({
-        error: "not found",
-      })
-    );
-    return;
+  let updateTodo = {};
+  // name
+  if (req.body.name !== null && req.body.name !== undefined) {
+    updateTodo.name = req.body.name;
   }
-  // success
-
-  // check if name is in the body
-  if (req.body.name !== undefined) {
-    // if it is update
-    store[req.params.id].name = req.body.name;
+  // description
+  if (req.body.description !== null && req.body.description !== undefined) {
+    updateTodo.description = req.body.description;
   }
-
-  // check if description is in the body
-  if (req.body.description !== undefined) {
-    // if it is update
-    store[req.params.id].description = req.body.description;
+  // deadline
+  if (req.body.deadline !== null && req.body.deadline !== undefined) {
+    updateTodo.deadline = req.body.deadline;
+  }
+  // done
+  if (req.body.done !== null && req.body.done !== undefined) {
+    updateTodo.done = req.body.done;
   }
 
-  // check if done is in the body
-  if (req.body.done !== undefined) {
-    // if it is update
-    store[req.params.id].done = req.body.done;
-  }
-
-  // check if deadline is in the body
-  if (req.body.deadline !== undefined) {
-    // if it is update
-    store[req.params.id].deadline = req.body.deadline;
-  }
-
-  res.send(store[req.params.id]);
+  Todo.updateOne(
+    { _id: req.params.id },
+    {
+      $set: updateTodo,
+    },
+    function (err, updateOneResponse) {
+      if (err) {
+        console.log(`unable to patch todo`);
+        res.status(500).json({
+          message: "unable to patch todo",
+          error: err,
+        });
+        return;
+      } else if (updateOneResponse.n === 0) {
+        console.log(`unable to patch todo with id ${req.params.id}`);
+        res.status(404).json({
+          message: `todo with id ${req.params.id} not found`,
+          error: err,
+        });
+      } else {
+        res.status(200).json(updateOneResponse);
+      }
+    }
+  );
 });
 
 // Put - replaces the todo with the given id`
 app.put("/todo/:id", function (req, res) {
   console.log(`replacing todo with id: ${req.params.id} with body`, req.body);
-  if (store[req.params.id] === undefined) {
-    // error
-    // if it doesn't, send back and error
-    res.status(404).send(
-      JSON.stringify({
-        error: "not found",
-      })
-    );
-    return;
-  }
-  // replace
-  store[req.params.id] = req.body;
-  // success
-  res.send(JSON.stringify(store[req.params.id]));
+
+  let updateTodo = {
+    name: req.body.name || "",
+    description: req.body.description || "",
+    done: req.body.done || false,
+    deadline: req.body.deadline || new Date(),
+  };
+
+  Todo.updateOne(
+    { _id: req.params.id },
+    updateTodo,
+    function (err, updateOneResponse) {
+      if (err) {
+        console.log(`unable to replace todo`);
+        res.status(500).json({
+          message: "unable to replace todo",
+          error: err,
+        });
+        return;
+      } else if (updateOneResponse.n === 0) {
+        console.log(`unable to replace todo with id ${req.params.id}`);
+        res.status(404).json({
+          message: `todo with id ${req.params.id} not found`,
+          error: err,
+        });
+      } else {
+        res.status(200).json(updateOneResponse);
+      }
+    }
+  );
 });
 
 module.exports = app;
