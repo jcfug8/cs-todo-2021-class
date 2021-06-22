@@ -36,6 +36,13 @@ app.get("/todo", (req, res) => {
     findQuery.name = req.query.name;
   }
 
+  if (
+    req.query.afterDeadline !== null &&
+    req.query.afterDeadline !== undefined
+  ) {
+    findQuery.$deadline = { $gt: new ISODate(req.query.afterDeadline) };
+  }
+
   console.log("getting all todos with find query", findQuery);
   // return all of the todos in the store
 
@@ -196,7 +203,7 @@ app.put("/todo/:id", function (req, res) {
 
   Todo.updateOne(
     { _id: req.params.id },
-    updateTodo,
+    { $set: { updateTodo } },
     function (err, updateOneResponse) {
       if (err) {
         console.log(`unable to replace todo`);
