@@ -36,7 +36,7 @@ app.get("/todo", (req, res) => {
     findQuery.name = req.query.name;
   }
 
-  console.log("getting all todos");
+  console.log("getting all todos with find query", findQuery);
   // return all of the todos in the store
 
   Todo.find(findQuery, function (err, todos) {
