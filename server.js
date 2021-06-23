@@ -40,7 +40,7 @@ app.get("/todo", (req, res) => {
     req.query.afterDeadline !== null &&
     req.query.afterDeadline !== undefined
   ) {
-    findQuery.$deadline = { $gt: new ISODate(req.query.afterDeadline) };
+    findQuery.$deadline = { $gt: new Date(req.query.afterDeadline) };
   }
 
   console.log("getting all todos with find query", findQuery);
