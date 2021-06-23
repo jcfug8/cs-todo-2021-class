@@ -40,7 +40,7 @@ app.get("/todo", (req, res) => {
     req.query.afterDeadline !== null &&
     req.query.afterDeadline !== undefined
   ) {
-    findQuery.$deadline = { $gt: new Date(req.query.afterDeadline) };
+    findQuery.deadline = { $gt: new Date(req.query.afterDeadline) };
   }
 
   console.log("getting all todos with find query", findQuery);
@@ -201,10 +201,16 @@ app.put("/todo/:id", function (req, res) {
     deadline: req.body.deadline || new Date(),
   };
 
+  console.log("updateTodo", updateTodo);
+
   Todo.updateOne(
     { _id: req.params.id },
-    { $set: { updateTodo } },
+    {
+      $set: updateTodo,
+    },
     function (err, updateOneResponse) {
+      console.log("err", err);
+      console.log("updateOneResponse", updateOneResponse);
       if (err) {
         console.log(`unable to replace todo`);
         res.status(500).json({
